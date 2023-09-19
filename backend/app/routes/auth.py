@@ -4,6 +4,7 @@ from sqlalchemy import select
 from app.database import db
 from app.models.user import User
 from werkzeug.security import check_password_hash
+from werkzeug.exceptions import NotFound
 import jwt
 
 auth_pb = Blueprint("auth", __name__, url_prefix="/auth")
@@ -15,8 +16,11 @@ def login_user():
     data = request.json
     creadentials = login_dto.load(data)
     print(creadentials.username)
-    user = db.session.scalars(select(User).where(
-        User.username == creadentials.username)).one()
+    user = User.query.filter_by(username=creadentials.username).first()
+    
+    if not user:
+        raise NotFound("User not found")
+
     if "username" not in data or "password" not in data:
         raise Exception("Unable to authenticate")
 
